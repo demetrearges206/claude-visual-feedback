@@ -29,7 +29,9 @@ if [ -n "$PID" ]; then echo "• stopping existing server on :$PORT (pid $PID)";
 echo "• starting visual-feedback server (root: $ROOT, port: $PORT)"
 # setsid fully detaches the server into its own session, so it survives the parent
 # shell exiting (e.g. devcontainer postStartCommand finishing, or a one-shot run).
-setsid node "$TOOL_DIR/serve.js" --root "$ROOT" --port "$PORT" </dev/null >/tmp/vf-dev-serve.log 2>&1 &
+# --out writes comments INTO the served project (not the tool dir), so each repo's
+# own Claude sees its own .vf-comments.json in its own workspace.
+setsid node "$TOOL_DIR/serve.js" --root "$ROOT" --port "$PORT" --out "$ROOT/.vf-comments.json" </dev/null >/tmp/vf-dev-serve.log 2>&1 &
 sleep 1.5
 
 # 4. auto-publish the port. Needs a token with 'codespace' scope. Set a Codespaces

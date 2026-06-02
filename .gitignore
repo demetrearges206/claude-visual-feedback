@@ -1,3 +1,4 @@
 node_modules/
 comments.json
 *.png
+.vf-comments.json
