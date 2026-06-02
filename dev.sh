@@ -32,13 +32,19 @@ echo "• starting visual-feedback server (root: $ROOT, port: $PORT)"
 setsid node "$TOOL_DIR/serve.js" --root "$ROOT" --port "$PORT" </dev/null >/tmp/vf-dev-serve.log 2>&1 &
 sleep 1.5
 
-# 4. best-effort: make the port public (needs gh 'codespace' scope; ok if it fails)
+# 4. auto-publish the port. Needs a token with 'codespace' scope. Set a Codespaces
+#    secret VF_GH_PAT (a PAT with the codespace scope) and it works automatically in
+#    every Codespace — like the Figma secret. Falls back to the stored gh login.
 if [ -n "${CODESPACE_NAME:-}" ]; then
-  if env -u GITHUB_TOKEN -u GH_TOKEN gh codespace ports visibility "$PORT:public" -c "$CODESPACE_NAME" >/dev/null 2>&1; then
-    echo "• port $PORT set PUBLIC"
-  else
-    echo "• (couldn't auto-public port $PORT — keep it Private and sign into GitHub on your phone, or toggle in the Ports panel)"
+  PUB=""
+  if [ -n "${VF_GH_PAT:-}" ]; then
+    GH_TOKEN="$VF_GH_PAT" gh codespace ports visibility "$PORT:public" -c "$CODESPACE_NAME" >/dev/null 2>&1 && PUB=1
   fi
+  if [ -z "$PUB" ]; then
+    env -u GITHUB_TOKEN -u GH_TOKEN gh codespace ports visibility "$PORT:public" -c "$CODESPACE_NAME" >/dev/null 2>&1 && PUB=1
+  fi
+  [ -n "$PUB" ] && echo "• port $PORT PUBLIC" \
+    || echo "• port $PORT stays PRIVATE — add a Codespaces secret VF_GH_PAT (PAT w/ codespace scope) to auto-publish"
 fi
 
 # 5. compute the forwarded URL
