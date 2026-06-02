@@ -27,7 +27,9 @@ if [ -n "$PID" ]; then echo "• stopping existing server on :$PORT (pid $PID)";
 
 # 3. start the server in the background
 echo "• starting visual-feedback server (root: $ROOT, port: $PORT)"
-nohup node "$TOOL_DIR/serve.js" --root "$ROOT" --port "$PORT" >/tmp/vf-dev-serve.log 2>&1 &
+# setsid fully detaches the server into its own session, so it survives the parent
+# shell exiting (e.g. devcontainer postStartCommand finishing, or a one-shot run).
+setsid node "$TOOL_DIR/serve.js" --root "$ROOT" --port "$PORT" </dev/null >/tmp/vf-dev-serve.log 2>&1 &
 sleep 1.5
 
 # 4. best-effort: make the port public (needs gh 'codespace' scope; ok if it fails)
