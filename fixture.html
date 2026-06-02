@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VF fixture</title>
+<style>
+  body { margin:0; font:16px/1.5 system-ui, sans-serif; background:#060f1f; color:#eef3ff; padding:24px; }
+  .card { position:relative; background:#0e2040; border-radius:16px; padding:20px; margin:20px 0; }
+  /* eyebrow ribbon as a ::before pseudo-element — the case that can't be tapped directly */
+  .card::before { content:""; position:absolute; inset:0 0 auto 0; height:6px; border-radius:16px 16px 0 0;
+    background:linear-gradient(90deg,#00c9a7,#2196f3); }
+  h1 { font-size:22px; margin:0 0 12px; }
+  .price { font-size:34px; font-weight:800; color:#ffc947; }
+  .pill { display:inline-block; background:#162d52; border-radius:999px; padding:4px 12px; font-size:13px; }
+  footer { color:#8099c0; font-size:13px; margin-top:8px; }
+</style>
+</head>
+<body>
+  <h1 id="title">Visual-feedback fixture</h1>
+  <div class="card" id="card">
+    <h2 id="cardHead">Featured item</h2>
+    <div class="price" id="price">$42.00</div>
+    <span class="pill" id="pill">In stock</span>
+  </div>
+  <footer id="foot">Static page — no timers, deterministic for testing the overlay.</footer>
+</body>
+</html>
