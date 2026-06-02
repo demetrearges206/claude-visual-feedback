@@ -37,14 +37,20 @@ sleep 1.5
 #    every Codespace — like the Figma secret. Falls back to the stored gh login.
 if [ -n "${CODESPACE_NAME:-}" ]; then
   PUB=""
-  if [ -n "${VF_GH_PAT:-}" ]; then
-    GH_TOKEN="$VF_GH_PAT" gh codespace ports visibility "$PORT:public" -c "$CODESPACE_NAME" >/dev/null 2>&1 && PUB=1
-  fi
-  if [ -z "$PUB" ]; then
-    env -u GITHUB_TOKEN -u GH_TOKEN gh codespace ports visibility "$PORT:public" -c "$CODESPACE_NAME" >/dev/null 2>&1 && PUB=1
-  fi
-  [ -n "$PUB" ] && echo "• port $PORT PUBLIC" \
-    || echo "• port $PORT stays PRIVATE — add a Codespaces secret VF_GH_PAT (PAT w/ codespace scope) to auto-publish"
+  # gh exits 0 even on failure, and the port tunnel may not be ready the instant the
+  # server starts — so attempt + VERIFY, retrying while the tunnel comes up.
+  for attempt in 1 2 3 4 5 6; do
+    if [ -n "${VF_GH_PAT:-}" ]; then
+      GH_TOKEN="$VF_GH_PAT" gh codespace ports visibility "$PORT:public" -c "$CODESPACE_NAME" >/dev/null 2>&1 || true
+      if GH_TOKEN="$VF_GH_PAT" gh codespace ports -c "$CODESPACE_NAME" 2>/dev/null | grep -E "(^|[[:space:]])$PORT[[:space:]]" | grep -q public; then PUB=1; fi
+    else
+      env -u GITHUB_TOKEN -u GH_TOKEN gh codespace ports visibility "$PORT:public" -c "$CODESPACE_NAME" >/dev/null 2>&1 || true
+      if env -u GITHUB_TOKEN -u GH_TOKEN gh codespace ports -c "$CODESPACE_NAME" 2>/dev/null | grep -E "(^|[[:space:]])$PORT[[:space:]]" | grep -q public; then PUB=1; fi
+    fi
+    if [ -n "$PUB" ]; then break; fi
+    sleep 4
+  done
+  if [ -n "$PUB" ]; then echo "• port $PORT PUBLIC"; else echo "• port $PORT not public (no VF_GH_PAT secret, or port not forwarded yet)"; fi
 fi
 
 # 5. compute the forwarded URL
